@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+# 配置图片保存路径需要的包
+import os
+
 # Scrapy settings for ArticleSpider project
 #
 # For simplicity, this file contains only settings considered important or
@@ -64,9 +67,24 @@ ROBOTSTXT_OBEY = False  #robbots协议
 
 # Configure item pipelines
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    'ArticleSpider.pipelines.ArticlespiderPipeline': 300,
-#}
+ITEM_PIPELINES = {
+   # 一 这里配置的就是流经的管道，数字越小越早进入管道
+
+   'ArticleSpider.pipelines.ArticlespiderPipeline': 300,
+    # 配置的是图片
+    #'scrapy.pipelines.images.ImagesPipeline': 1,
+    'ArticleSpider.pipelines.ArticleImagePipeline': 1,
+}
+# 二 配置字段
+IMAGES_URLS_FIELD = "front_image_url"
+# 三 设置图片保存路径
+    #file代表当前文件，os.path.dirname(__file__)就代表file的dir（即文件夹）
+project_dir = os.path.abspath(os.path.dirname(__file__))
+IMAGES_STORE = os.path.join(project_dir,"images")
+
+# 四（参考scrapy.pipelines.images.ImagesPipeline的一些功能）修改过滤的图片大小
+IMAGES_MIN_HEIGHT = 100
+IMAGES_MIN_WIDTH = 100
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://doc.scrapy.org/en/latest/topics/autothrottle.html

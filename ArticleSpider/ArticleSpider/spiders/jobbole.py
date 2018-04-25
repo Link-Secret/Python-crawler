@@ -6,6 +6,12 @@ from scrapy.http import Request
 # 拼接URL地址的函数
 from urllib import parse
 
+# 存储字段
+from ArticleSpider.items import JobBoleArticleItem
+
+# utils工具类的common ，对url进行MD5，将长度变成固定长度
+from ArticleSpider.utils.common import get_md5
+
 class JobboleSpider(scrapy.Spider):
     name = 'jobbole'
     allowed_domains = ['blog.jobbole.com']
@@ -18,16 +24,21 @@ class JobboleSpider(scrapy.Spider):
         '''
 
         '''1-解析列表页中的所有文章URL并交给scrapy下载后并进行解析'''
-        post_urls = response.css("#archive .floated-thumb .post-thumb a::attr(href)").extract()
+        post_nodes = response.css("#archive .floated-thumb .post-thumb a")
         # 对获取的当前页(所有文章页)的所有文章详情页地址遍历
-        for post_url in post_urls:
+        for post_node in post_nodes:
+            # 使用post_node节点的img选择器
+            image_url = post_node.css("img::attr(src)").extract_first("")
+            post_url = post_node.css("::attr(href)").extract_first("")
+
+
             # 每个超链都调用parse_detail函数，得到具体的内容
             # yield Request(url = post_url,callback=self.parse_detail)
 
             '''伯乐网的超链是完整地址，只是为了演示有的网站超链基于当前地址（不是完整地址）所以使用这个URLjoin'''
             # yield关键字会自动交给scrapy进行下载
             # Request函数执行完url的爬取后都会调用(回调函数)self.parse_detail函数,即提取文章具体字段，循环即可
-            yield Request(url= parse.urljoin(response.url,post_url),callback=self.parse_detail)
+            yield Request(url= parse.urljoin(response.url,post_url), meta={"front_image_url":image_url}, callback=self.parse_detail)
 
         '''2-提取下一页进行下载'''
         next_url = response.css(".next.page-numbers::attr(href)").extract_first("")
@@ -37,11 +48,17 @@ class JobboleSpider(scrapy.Spider):
 
     '''提取文章的具体字段'''
     def parse_detail(self,response):
+        # 图片
+        article_item = JobBoleArticleItem()
+
         # 得到标题
         # re_selector = response.xpath("/html/body/div[3]/div[3]/div[1]/div[1]/h1")
         # re2_selector = response.xpath('//*[@id="post-110287"]/div[1]/h1/text()')
         # title1 = response.xpath('//*[@id="post-110287"]/div[1]/h1/text()').extract()[0]
         # create_date1 = response.xpath('//*[@id="post-110287"]/div[2]/p/text()').extract()[0].strip().replace("·","").strip()
+
+        '''front_image_url字段  文章封面图'''
+        front_image_url = response.meta.get("front_image_url", "")
 
         title = response.xpath('//div[@class="entry-header"]/h1/text()').extract()[0]
         create_date = response.xpath("//p[@class='entry-meta-hide-on-mobile']/text()").extract()[0].strip().replace('·','').strip()
@@ -74,7 +91,23 @@ class JobboleSpider(scrapy.Spider):
         tags = ",".join(tag_list)
 
 
+        # 1.需要在items中字段设置
+        article_item["url_object_id"] = get_md5(response.url)
 
+        article_item["title"] = title
+        article_item["create_date"] = create_date
+
+        article_item["url"] = response.url
+        article_item["front_image_url"] = [front_image_url]  #图片地址是数组
+        article_item["praise_nums"] = praise_nums
+        article_item["comment_nums"] = comment_nums
+        article_item["fav_nums"] = fav_nums
+        article_item["tags"] = tags
+        article_item["content"] = content
+
+
+        # 2. 会传递到pipelines中
+        yield article_item
 
 
 
@@ -85,5 +118,3 @@ class JobboleSpider(scrapy.Spider):
         # ccreate_date = response.css(".entry-meta-hide-on-mobile::text").extract()[0].strip().replace('·','').strip()
         # cparise_nums = response.css("")
 
-
-        pass
