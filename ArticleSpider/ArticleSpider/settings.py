@@ -70,10 +70,13 @@ ROBOTSTXT_OBEY = False  #robbots协议
 ITEM_PIPELINES = {
    # 一 这里配置的就是流经的管道，数字越小越早进入管道
 
-   'ArticleSpider.pipelines.ArticlespiderPipeline': 300,
+    #'ArticleSpider.pipelines.ArticlespiderPipeline': 300,
     # 配置的是图片
     #'scrapy.pipelines.images.ImagesPipeline': 1,
-    'ArticleSpider.pipelines.ArticleImagePipeline': 1,
+    #'ArticleSpider.pipelines.ArticleImagePipeline': 1,
+    #配置保存到json文件的pipeline
+    'ArticleSpider.pipelines.JsonWithEncodingPipeline': 2,
+
 }
 # 二 配置字段
 IMAGES_URLS_FIELD = "front_image_url"
