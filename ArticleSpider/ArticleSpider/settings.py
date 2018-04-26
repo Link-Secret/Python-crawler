@@ -74,9 +74,15 @@ ITEM_PIPELINES = {
     # 配置的是图片
     #'scrapy.pipelines.images.ImagesPipeline': 1,
     #'ArticleSpider.pipelines.ArticleImagePipeline': 1,
-    #配置保存到json文件的pipeline
-    'ArticleSpider.pipelines.JsonWithEncodingPipeline': 2,
 
+    #配置保存到json文件的pipeline
+    #'ArticleSpider.pipelines.JsonWithEncodingPipeline': 2,
+    #'ArticleSpider.pipelines.jsonExporterPipleline': 2,
+
+    #保存到数据库
+    #'ArticleSpider.pipelines.MysqlPipeline': 2,
+    #异步处理
+    'ArticleSpider.pipelines.MysqlTwistedPipeline': 2,
 }
 # 二 配置字段
 IMAGES_URLS_FIELD = "front_image_url"
@@ -109,3 +115,9 @@ IMAGES_MIN_WIDTH = 100
 #HTTPCACHE_DIR = 'httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+
+# 7.2异步导入数据库 ，配置文件
+MYSQL_HOST = "127.0.0.1"
+MYSQL_DBNAME = 'article_spider'
+MYSQL_USER = 'root'
+MYSQL_PASSWORD = 'admin'

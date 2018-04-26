@@ -12,6 +12,9 @@ from ArticleSpider.items import JobBoleArticleItem
 # utils工具类的common ，对url进行MD5，将长度变成固定长度
 from ArticleSpider.utils.common import get_md5
 
+# 转换成数据库中字段
+import datetime
+
 class JobboleSpider(scrapy.Spider):
     name = 'jobbole'
     allowed_domains = ['blog.jobbole.com']
@@ -95,6 +98,12 @@ class JobboleSpider(scrapy.Spider):
         article_item["url_object_id"] = get_md5(response.url)
 
         article_item["title"] = title
+        # 将string类型的日期转换成date类型的日期
+        try:
+            create_date = datetime.datetime.strptime(create_date,"%Y/%m/%d").date()
+        except Exception as e:
+            # 如果转换异常则获取当前日期
+            create_date = datetime.datetime.now().date()
         article_item["create_date"] = create_date
 
         article_item["url"] = response.url

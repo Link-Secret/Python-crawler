@@ -4,6 +4,13 @@ from scrapy.pipelines.images import ImagesPipeline
 # 打开文件，codecs可以避免编码问题
 import codecs
 import json
+# scrapy json格式文件导入包
+from scrapy.exporters import JsonItemExporter
+# mysql，导入数据到数据库
+import MySQLdb
+# 异步导入数据库，使用Twisted模块
+from twisted.enterprise import adbapi
+import MySQLdb.cursors
 
 # Define your item pipelines here
 #
@@ -32,6 +39,7 @@ class ArticleImagePipeline(ImagesPipeline):
         return item
 
 # 6.下一步就是和数据库打交道，这里将数据保存到json文件里
+'''6.1自定义类导出json文件'''
 class JsonWithEncodingPipeline(object):
     # 打开json文件
     def __init__(self):
@@ -49,3 +57,87 @@ class JsonWithEncodingPipeline(object):
     #关闭文件
     def spider_closed(self,spider):
         self.file.close()
+
+
+'''6.2 利用scrapy提供的json exporter导出json格式文件'''
+class jsonExporterPipleline(object):
+    def __init__(self):
+        # wb,二进制
+        self.file = open("articleexport.json",'wb')
+        self.exporter = JsonItemExporter(self.file, encoding = "utf-8",ensure_ascii=False)
+        self.exporter.start_exporting()
+
+    def close_spider(self,spider):
+        # 停止导出
+        self.exporter.finish_exporting()
+        # 文件关闭
+        self.file.close()
+
+    # 处理item
+    def process_item(self, item, spider):
+        self.exporter.export_item(item)
+        return item
+
+
+'''7，7.1 方法一：将数据导入到数据库中（同步） '''
+class MysqlPipeline(object):
+    def __init__(self):
+        # 连接数据库
+        #self.conn = MySQLdb.connect('host','user','password','dbname',charset='utf8',use_unicode = True)
+        self.conn = MySQLdb.connect('127.0.0.1', 'root', 'admin', 'article_spider', charset='utf8', use_unicode=True)
+        # 获取cursor
+        self.cursor = self.conn.cursor()
+
+    def process_item(self,item,spider):
+        insert_sql = """
+            insert into jobbole_article(title,url,create_date,fav_nums, url_object_id)
+            VALUES (%s, %s, %s, %s, %s)
+        """
+        self.cursor.execute(insert_sql,(item['title'],item['url'],item['create_date'],item['fav_nums'],item['url_object_id']))
+        self.conn.commit()
+
+
+''''7，7.2 方法二：将数据导入到数据库中（异步）Twisted提供 '''
+class MysqlTwistedPipeline(object):
+        # 接收cls(classmethod中)实例化的参数
+        def __init__(self, dbpool):
+            self.dbpool = dbpool
+
+        #setting中设置Host，user，password
+        # 从setting中得到配置参数
+        # 相当于构造函数
+        @classmethod
+        def from_settings(cls,settings):    #from_settings 写错成setting会无法正常调用，和类名要相同
+            # dict类型的可变参数
+            dbparms = dict(
+                host = settings['MYSQL_HOST'],
+                db = settings['MYSQL_DBNAME'],
+                user = settings['MYSQL_USER'],
+                passwd = settings['MYSQL_PASSWORD'],
+                charset = 'utf8',
+                cursorclass = MySQLdb.cursors.DictCursor,
+                use_unicode = True,
+            )
+            dbpool = adbapi.ConnectionPool("MySQLdb",**dbparms)
+            # 跳转到init中，
+            return cls(dbpool)
+
+        def process_item(self,item,spider):
+            # 异步执行
+            query = self.dbpool.runInteraction(self.do_insert,item)
+            #错误(异常)处理
+            query.addErrback(self.handle_error)
+
+        #错误处理函数
+        def handle_error(self,failure):
+            #处理异步插入的异常
+            print(failure)
+
+        def do_insert(self,cursor,item):
+            # 执行具体的插入
+            insert_sql = """
+                        insert into jobbole_article(title,url,create_date,fav_nums, url_object_id)
+                        VALUES (%s, %s, %s, %s, %s)
+                    """
+            cursor.execute(insert_sql, (
+            item['title'], item['url'], item['create_date'], item['fav_nums'], item['url_object_id']))
