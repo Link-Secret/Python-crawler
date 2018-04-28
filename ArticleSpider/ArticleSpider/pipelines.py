@@ -32,7 +32,7 @@ class ArticleImagePipeline(ImagesPipeline):
         for ok, value in results:
             image_file_path = value["path"]
         #得到image_file_path就将路径填充到items中
-        item["image_file_path"] = image_file_path
+        item["front_image_path"] = image_file_path
 
         # 重写的pipeline需要return出去，因为下一个pipeline需要处理
         # （即setting中设置的，这个优先级为1，后面还有一个300(就是上面的ArticlespiderPipeline)）

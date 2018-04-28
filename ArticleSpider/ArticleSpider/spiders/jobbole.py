@@ -15,6 +15,9 @@ from ArticleSpider.utils.common import get_md5
 # 转换成数据库中字段
 import datetime
 
+# itemloader,item管理容器
+from scrapy.loader import ItemLoader
+
 class JobboleSpider(scrapy.Spider):
     name = 'jobbole'
     allowed_domains = ['blog.jobbole.com']
@@ -51,7 +54,7 @@ class JobboleSpider(scrapy.Spider):
 
     '''提取文章的具体字段'''
     def parse_detail(self,response):
-        # 图片
+        # 实例化items.py中定义的item
         article_item = JobBoleArticleItem()
 
         # 得到标题
@@ -115,8 +118,29 @@ class JobboleSpider(scrapy.Spider):
         article_item["content"] = content
 
 
-        # 2. 会传递到pipelines中
+
+    #8. 通过item-loader加载item
+        #item需要是实例
+        item_loader = ItemLoader(item = JobBoleArticleItem(),response = response)
+        # 添加规则
+        item_loader.add_xpath("title",'//div[@class="entry-header"]/h1/text()')  #.add_css同样
+        item_loader.add_value('url',response.url)
+        item_loader.add_value('url_object_id',get_md5(response.url))
+        item_loader.add_xpath('create_date',"//p[@class='entry-meta-hide-on-mobile']/text()")
+        item_loader.add_value('front_image_url',[front_image_url])
+        item_loader.add_xpath('praise_nums',"//span[contains(@class,'vote-post-up')]/h10/text()")
+        item_loader.add_xpath('comment_nums', "//a[@href='#article-comment']/span/text()")
+        item_loader.add_xpath('fav_nums', "//span[contains(@class,'bookmark-btn')]/text()")
+        item_loader.add_xpath('tags', "//p[@class='entry-meta-hide-on-mobile']/a/text()")
+        item_loader.add_xpath('content', "//div[@class='entry'")
+
+        #规则解析
+        article_item = item_loader.load_item()
+
+
+        # 2. 这个item会传递到pipelines中
         yield article_item
+
 
 
 
