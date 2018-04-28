@@ -28,14 +28,16 @@ class ArticlespiderPipeline(object):
 class ArticleImagePipeline(ImagesPipeline):
     # 这个item和jobbole中的article_item意义相当
     def item_completed(self, results, item, info):
-        # results返回的第一个值是ok，第二个值是图片的路径
-        for ok, value in results:
-            image_file_path = value["path"]
-        #得到image_file_path就将路径填充到items中
-        item["front_image_path"] = image_file_path
+        # 因为有的网站爬取没有封面，所以要判断是否有封面图片
+        if "front_image_url" in item:
+            # results返回的第一个值是ok，第二个值是图片的路径
+            for ok, value in results:
+                image_file_path = value["path"]
+            #得到image_file_path就将路径填充到items中
+            item["front_image_path"] = image_file_path
 
-        # 重写的pipeline需要return出去，因为下一个pipeline需要处理
-        # （即setting中设置的，这个优先级为1，后面还有一个300(就是上面的ArticlespiderPipeline)）
+            # 重写的pipeline需要return出去，因为下一个pipeline需要处理
+            # （即setting中设置的，这个优先级为1，后面还有一个300(就是上面的ArticlespiderPipeline)）
         return item
 
 # 6.下一步就是和数据库打交道，这里将数据保存到json文件里

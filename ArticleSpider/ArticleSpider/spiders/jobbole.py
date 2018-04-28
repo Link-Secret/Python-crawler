@@ -6,8 +6,9 @@ from scrapy.http import Request
 # 拼接URL地址的函数
 from urllib import parse
 
-# 存储字段
-from ArticleSpider.items import JobBoleArticleItem
+# 存储字段,
+# 8.4自定义itemloader，自定义规则
+from ArticleSpider.items import JobBoleArticleItem,ArticleItemLoader
 
 # utils工具类的common ，对url进行MD5，将长度变成固定长度
 from ArticleSpider.utils.common import get_md5
@@ -66,62 +67,64 @@ class JobboleSpider(scrapy.Spider):
         '''front_image_url字段  文章封面图'''
         front_image_url = response.meta.get("front_image_url", "")
 
-        title = response.xpath('//div[@class="entry-header"]/h1/text()').extract()[0]
-        create_date = response.xpath("//p[@class='entry-meta-hide-on-mobile']/text()").extract()[0].strip().replace('·','').strip()
-        # 点赞数
-        praise_nums = int(response.xpath("//span[contains(@class,'vote-post-up')]/h10/text()").extract()[0])
-
-        # 收藏数
-        fav_nums = response.xpath("//span[contains(@class,'bookmark-btn')]/text()").extract()[0]
-        # 注意这里要非贪婪匹配
-        match_re = re.match(".*?(\d+).*",fav_nums);
-        if match_re:
-            fav_nums = int(match_re.group(1))
-        else:
-            fav_nums = 0
-
-        # 评论数
-        comment_nums = response.xpath("//a[@href='#article-comment']/span/text()").extract()[0]
-        match_re2 = re.match(".*?(\d+).*",comment_nums);
-        if match_re2:
-            comment_nums = int(match_re2.group(1))
-        else:
-            comment_nums = 0
-
-        # 内容
-        content = response.xpath("//div[@class='entry']").extract()[0]
-
-        # 标签 比如 职场 面试
-        tag_list = response.xpath("//p[@class='entry-meta-hide-on-mobile']/a/text()").extract()
-        tag_list = [element for element in tag_list if not element.strip().endswith("评论")]
-        tags = ",".join(tag_list)
-
-
-        # 1.需要在items中字段设置
-        article_item["url_object_id"] = get_md5(response.url)
-
-        article_item["title"] = title
-        # 将string类型的日期转换成date类型的日期
-        try:
-            create_date = datetime.datetime.strptime(create_date,"%Y/%m/%d").date()
-        except Exception as e:
-            # 如果转换异常则获取当前日期
-            create_date = datetime.datetime.now().date()
-        article_item["create_date"] = create_date
-
-        article_item["url"] = response.url
-        article_item["front_image_url"] = [front_image_url]  #图片地址是数组
-        article_item["praise_nums"] = praise_nums
-        article_item["comment_nums"] = comment_nums
-        article_item["fav_nums"] = fav_nums
-        article_item["tags"] = tags
-        article_item["content"] = content
+        '''使用item_loader来开发'''
+        # title = response.xpath('//div[@class="entry-header"]/h1/text()').extract()[0]
+        # create_date = response.xpath("//p[@class='entry-meta-hide-on-mobile']/text()").extract()[0].strip().replace('·','').strip()
+        # # 点赞数
+        # praise_nums = int(response.xpath("//span[contains(@class,'vote-post-up')]/h10/text()").extract()[0])
+        #
+        # # 收藏数
+        # fav_nums = response.xpath("//span[contains(@class,'bookmark-btn')]/text()").extract()[0]
+        # # 注意这里要非贪婪匹配
+        # match_re = re.match(".*?(\d+).*",fav_nums);
+        # if match_re:
+        #     fav_nums = int(match_re.group(1))
+        # else:
+        #     fav_nums = 0
+        #
+        # # 评论数
+        # comment_nums = response.xpath("//a[@href='#article-comment']/span/text()").extract()[0]
+        # match_re2 = re.match(".*?(\d+).*",comment_nums);
+        # if match_re2:
+        #     comment_nums = int(match_re2.group(1))
+        # else:
+        #     comment_nums = 0
+        #
+        # # 内容
+        # content = response.xpath("//div[@class='entry']").extract()[0]
+        #
+        # # 标签 比如 职场 面试
+        # tag_list = response.xpath("//p[@class='entry-meta-hide-on-mobile']/a/text()").extract()
+        # tag_list = [element for element in tag_list if not element.strip().endswith("评论")]
+        # tags = ",".join(tag_list)
+        #
+        #
+        # # 1.需要在items中字段设置
+        # article_item["url_object_id"] = get_md5(response.url)
+        #
+        # article_item["title"] = title
+        # # 将string类型的日期转换成date类型的日期
+        # try:
+        #     create_date = datetime.datetime.strptime(create_date,"%Y/%m/%d").date()
+        # except Exception as e:
+        #     # 如果转换异常则获取当前日期
+        #     create_date = datetime.datetime.now().date()
+        # article_item["create_date"] = create_date
+        #
+        # article_item["url"] = response.url
+        # article_item["front_image_url"] = [front_image_url]  #图片地址是数组
+        # article_item["praise_nums"] = praise_nums
+        # article_item["comment_nums"] = comment_nums
+        # article_item["fav_nums"] = fav_nums
+        # article_item["tags"] = tags
+        # article_item["content"] = content
 
 
 
     #8. 通过item-loader加载item
         #item需要是实例
-        item_loader = ItemLoader(item = JobBoleArticleItem(),response = response)
+        #需要使用自定义规则的itemloader
+        item_loader = ArticleItemLoader(item = JobBoleArticleItem(),response = response)
         # 添加规则
         item_loader.add_xpath("title",'//div[@class="entry-header"]/h1/text()')  #.add_css同样
         item_loader.add_value('url',response.url)
