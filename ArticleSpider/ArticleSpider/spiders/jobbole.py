@@ -12,7 +12,7 @@ from ArticleSpider.items import JobBoleArticleItem
 # utils工具类的common ，对url进行MD5，将长度变成固定长度
 from ArticleSpider.utils.common import get_md5
 
-# 转换成数据库中字段
+# 转换日期成数据库中字date类型
 import datetime
 
 # itemloader,item管理容器
@@ -132,9 +132,9 @@ class JobboleSpider(scrapy.Spider):
         item_loader.add_xpath('comment_nums', "//a[@href='#article-comment']/span/text()")
         item_loader.add_xpath('fav_nums', "//span[contains(@class,'bookmark-btn')]/text()")
         item_loader.add_xpath('tags', "//p[@class='entry-meta-hide-on-mobile']/a/text()")
-        item_loader.add_xpath('content', "//div[@class='entry'")
+        item_loader.add_xpath('content', "//div[@class='entry']")
 
-        #规则解析
+        #规则解析,如果不配置规则，则返回的值都是list类型
         article_item = item_loader.load_item()
 
 
