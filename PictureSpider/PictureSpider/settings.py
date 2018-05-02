@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+# 图片保存
+import os
+
 # Scrapy settings for PictureSpider project
 #
 # For simplicity, this file contains only settings considered important or
@@ -19,7 +22,7 @@ NEWSPIDER_MODULE = 'PictureSpider.spiders'
 #USER_AGENT = 'PictureSpider (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
-ROBOTSTXT_OBEY = True
+ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
@@ -64,9 +67,16 @@ ROBOTSTXT_OBEY = True
 
 # Configure item pipelines
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    'PictureSpider.pipelines.PicturespiderPipeline': 300,
-#}
+ITEM_PIPELINES = {
+   'PictureSpider.pipelines.PicturespiderPipeline': 300,
+    # 配置的是图片
+    'scrapy.pipelines.images.ImagesPipeline': 1,
+}
+# 图片下载相关配置
+IMAGES_URLS_FIELD = "front_image_url"
+# 保存地址
+project_dir = os.path.abspath(os.path.dirname(__file__))
+IMAGES_STORE = os.path.join(project_dir,"images")
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://doc.scrapy.org/en/latest/topics/autothrottle.html
