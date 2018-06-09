@@ -141,4 +141,5 @@ class ZhihuSpider(scrapy.Spider):
             pickle.dump(cookie, f)
             f.close()
             cookie_dict[cookie['name']] = cookie['value']
+        browser.close()
         return [scrapy.Request(url=self.start_urls[0], dont_filter=True, cookies=cookie_dict)]

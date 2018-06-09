@@ -17,7 +17,7 @@ from scrapy.loader import ItemLoader
 
 
 class ZhihuSpider(scrapy.Spider):
-    name = "zhihu_sel"
+    name = "zhihu_sel2"
     allowed_domains = ["www.zhihu.com"]
     start_urls = ['https://www.zhihu.com/']
 

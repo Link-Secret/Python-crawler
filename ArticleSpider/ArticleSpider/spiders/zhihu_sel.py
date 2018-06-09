@@ -26,7 +26,7 @@ class ZhihuSpider(scrapy.Spider):
 
     headers = {
         "HOST": "www.zhihu.com",
-        "Referer": "https://www.zhizhu.com",
+        "Referer": "https://www.zhihu.com",
         'User-Agent': "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:51.0) Gecko/20100101 Firefox/51.0"
     }
 
@@ -39,14 +39,9 @@ class ZhihuSpider(scrapy.Spider):
         提取出html页面中的所有url 并跟踪这些url进行一步爬取
         如果提取的url中格式为 /question/xxx 就下载之后直接进入解析函数
         """
+        print("登录成功！")
         pass
 
-    def parse_question(self, response):
-        #处理question页面， 从页面中提取出具体的question item
-       pass
-
-    def parse_answer(self, reponse):
-        pass
 
     def start_requests(self):
         from selenium import webdriver
@@ -54,9 +49,9 @@ class ZhihuSpider(scrapy.Spider):
 
         browser.get("https://www.zhihu.com/signin")
         browser.find_element_by_css_selector(".SignFlow-accountInput.Input-wrapper input").send_keys(
-            "1078184113@qq.com")
+            "15972926627")
         browser.find_element_by_css_selector(".SignFlow-password input").send_keys(
-            "zxcvbnmu")
+            "zxcvbnm123")
         browser.find_element_by_css_selector(
             ".Button.SignFlow-submitButton").click()
         import time
@@ -66,13 +61,10 @@ class ZhihuSpider(scrapy.Spider):
         cookie_dict = {}
         import pickle
         for cookie in Cookies:
-            # 写入文件E:\linuxShare\scrapy\ArticleSpider\cookies\zhihu
+            # 写入文件
             f = open('E:/linuxShare/scrapy/ArticleSpider/cookies/zhihu/' + cookie['name'] + '.zhihu', 'wb')
             pickle.dump(cookie, f)
             f.close()
             cookie_dict[cookie['name']] = cookie['value']
-        #browser.close()
-        # dont_filter不会被过滤
-        # 这里会返回到call_back到parse里面
-        # cookie_dict使用需要setting中修改cookie_enable=True,这样所有的request都会将这个cookie添加上去
+        browser.close()
         return [scrapy.Request(url=self.start_urls[0], dont_filter=True, cookies=cookie_dict)]
